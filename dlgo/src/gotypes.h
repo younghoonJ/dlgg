@@ -12,16 +12,13 @@ namespace gotypes {
 enum class Player {
     black,
     white,
-    none,
 };
 
 inline Player
 other(const Player &player) {
     if (player == Player::black)
         return Player::white;
-    if (player == Player::white)
-        return Player::black;
-    return Player::none;
+    return Player::black;
 }
 
 struct Point {

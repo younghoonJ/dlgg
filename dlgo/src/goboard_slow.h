@@ -4,7 +4,9 @@
 
 #ifndef DLGO_GOBOARD_SLOW_H
 #define DLGO_GOBOARD_SLOW_H
+
 #include <map>
+#include <memory>
 #include <set>
 
 #include "gotypes.h"
@@ -17,7 +19,7 @@ enum class MoveType {
 };
 
 class Move {
-    Move(MoveType moveType, const gotypes::Point& point)
+    Move(MoveType moveType, const gotypes::Point &point)
         : moveType(moveType), point(point) {}
 
 public:
@@ -25,7 +27,7 @@ public:
     const gotypes::Point point;
 
     inline static Move
-    play(const gotypes::Point& point) {
+    play(const gotypes::Point &point) {
         return {MoveType::play, point};
     }
 
@@ -46,28 +48,40 @@ public:
     std::set<gotypes::Point> stones;
     std::set<gotypes::Point> liberties;
 
-    Gostring(gotypes::Player color, const std::set<gotypes::Point>& stones,
-             const std::set<gotypes::Point>& liberties)
+    Gostring(gotypes::Player color) : color(color) {}
+
+    Gostring(gotypes::Player color, const std::set<gotypes::Point> &stones,
+             const std::set<gotypes::Point> &liberties)
         : color(color), stones(stones), liberties(liberties) {}
 
     inline bool
-    isEqual(const Gostring& other) {
+    isIn(const gotypes::Point &point) {
+        return stones.find(point) != stones.end();
+    };
+
+    inline bool
+    isInLiberties(const gotypes::Point &point) {
+        return liberties.find(point) != liberties.end();
+    };
+
+    inline bool
+    isEqual(const Gostring &other) {
         return color == other.color and stones == other.stones and
                liberties == other.liberties;
     };
 
     inline void
-    remove_liberty(const gotypes::Point& point) {
+    remove_liberty(const gotypes::Point &point) {
         liberties.erase(point);
     }
 
     inline void
-    add_liberty(const gotypes::Point& point) {
+    add_liberty(const gotypes::Point &point) {
         liberties.insert(point);
     }
 
-    Gostring
-    merged_with(const Gostring& other);
+    std::unique_ptr<Gostring>
+    merged_with(const Gostring &other);
 
     inline std::size_t
     num_liberties() {
@@ -76,20 +90,32 @@ public:
 };
 
 class Board {
-    std::map<gotypes::Point, Gostring*> grid;
+    std::map<gotypes::Point, Gostring *> grid;
+    std::vector<std::unique_ptr<Gostring> > _goStrings;
 
     inline bool
-    checkGridBound(const gotypes::Point& point) const {
+    checkGridBound(const gotypes::Point &point) const {
         return 1 <= point.row and point.row <= num_rows and 1 <= point.col and
                point.col <= num_cols;
     }
 
     inline gotypes::Player
-    getColor(const gotypes::Point& point) const {
-        if (grid.find(point) != grid.end())
-            return grid.at(point)->color;
-        return gotypes::Player::none;
+    getColor(const gotypes::Point &point) const {
+        return grid.at(point)->color;
     };
+
+    inline bool
+    isOccupied(const gotypes::Point &point) const {
+        return grid.find(point) == grid.end();
+    };
+
+    inline Gostring &
+    getGoString(const gotypes::Point &point) const {
+        return *grid.at(point);
+    }
+
+    void
+    removeString(const Gostring &gostring);
 
 
 public:
@@ -99,9 +125,16 @@ public:
     Board(int8_t numRows, int8_t numCols)
         : num_rows(numRows), num_cols(numCols) {}
 
-    bool
-    placeStone(gotypes::Player player, const gotypes::Point& point);
+    void
+    placeStone(gotypes::Player player, const gotypes::Point &point);
 };
+
+class GameState {
+    Board board;
+    gotypes::Player next_player;
+    Move last_move;
+};
+
 }  // namespace goboard
 
 
