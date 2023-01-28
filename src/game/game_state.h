@@ -43,7 +43,7 @@ struct GameStateZob {
     std::vector<std::pair<gotypes::Player, uint64_t>> prev_state_hash;
     gotypes::Move last_move;
 
-    GameStateZob(const goboard::BoardZob &board, gotypes::Player nextPlayer,
+    GameStateZob(goboard::BoardZob board, gotypes::Player nextPlayer,
                  GameStateZob *prevState, const gotypes::Move &lastMove);
 
     std::unique_ptr<GameStateZob> applyMove(const gotypes::Move &move);

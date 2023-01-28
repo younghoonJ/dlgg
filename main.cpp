@@ -6,7 +6,7 @@
 #include "src/game/zobrist.h"
 
 void run_naive() {
-    int board_size = 9;
+    int board_size = 19;
     auto bot_black = agent::RandomBot();
     auto bot_white = agent::RandomBot();
 
@@ -16,19 +16,19 @@ void run_naive() {
     gamestate::GameState* game = game_states.back().get();
 
     while (not game->isOver()) {
-        //        usleep(1000 * 1000);
+        //                usleep(1000 * 1000);
         std::cout << "\033[2J\033[1;1H";
         print::printBoard(game->board);
         auto bot_move = (isBlack(game->next_player) ? bot_black : bot_white)
                             .selectMove(*game);
-        print::printMove(game->next_player, bot_move);
+        //        print::printMove(game->next_player, bot_move);
         game_states.push_back(game->applyMove(bot_move));
         game = game_states.back().get();
     }
 };
 
 void run_naive_zob() {
-    int board_size = 9;
+    int board_size = 19;
     auto bot_black = agent::RandomBot();
     auto bot_white = agent::RandomBot();
 
@@ -50,9 +50,11 @@ void run_naive_zob() {
 }
 
 int main() {
+    //    zobrist::writeAsVec(zobrist::makeHash());
+    int testN = 10;
     std::chrono::steady_clock::time_point begin_n =
         std::chrono::steady_clock::now();
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < testN; ++i) {
         run_naive();
     }
     std::chrono::steady_clock::time_point end_n =
@@ -60,19 +62,19 @@ int main() {
 
     std::chrono::steady_clock::time_point begin_z =
         std::chrono::steady_clock::now();
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < testN; ++i) {
         run_naive_zob();
     }
     std::chrono::steady_clock::time_point end_z =
         std::chrono::steady_clock::now();
 
-    std::cout << "Naive\t 100 random run: "
+    std::cout << "Naive\t" << testN << " random run: "
               << std::chrono::duration_cast<std::chrono::microseconds>(end_n -
                                                                        begin_n)
                      .count()
               << "[µs]" << std::endl;
 
-    std::cout << "Zobrist\t 100 random run: "
+    std::cout << "Zobrist\t" << testN << " random run: "
               << std::chrono::duration_cast<std::chrono::microseconds>(end_z -
                                                                        begin_z)
                      .count()

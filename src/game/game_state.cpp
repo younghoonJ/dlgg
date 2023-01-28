@@ -4,6 +4,7 @@
 #include "game_state.h"
 
 #include <algorithm>
+#include <utility>
 
 namespace gamestate {
 std::unique_ptr<GameState> GameState::applyMove(const gotypes::Move &move) {
@@ -75,12 +76,13 @@ bool GameStateZob::doesMoveViolateKo(gotypes::Player player,
         return false;
     auto next_board = board;
     next_board.placeStone(player, move.point);
-    auto next_situation = std::make_pair(other(player), next_board.getHash());
-    return std::find_if(prev_state_hash.begin(), prev_state_hash.end(),
-                        [&](const std::pair<gotypes::Player, uint64_t> &p) {
-                            return p.first == next_situation.first and
-                                   p.second == next_situation.second;
-                        }) != prev_state_hash.end();
+    auto other_player = other(player);
+    auto next_hash    = next_board.getHash();
+    return std::any_of(prev_state_hash.begin(), prev_state_hash.end(),
+                       [&](const std::pair<gotypes::Player, uint64_t> &p) {
+                           return p.first == other_player and
+                                  p.second == next_hash;
+                       });
 }
 
 std::unique_ptr<GameStateZob> GameStateZob::applyMove(
@@ -98,10 +100,10 @@ std::unique_ptr<GameStateZob> GameStateZob::newGame(int board_size) {
         nullptr, gotypes::Move::None());
 }
 
-GameStateZob::GameStateZob(const goboard::BoardZob &board,
-                           gotypes::Player nextPlayer, GameStateZob *prevState,
+GameStateZob::GameStateZob(goboard::BoardZob board, gotypes::Player nextPlayer,
+                           GameStateZob *prevState,
                            const gotypes::Move &lastMove)
-    : board(board),
+    : board(std::move(board)),
       next_player(nextPlayer),
       prev_state(prevState),
       last_move(lastMove) {
