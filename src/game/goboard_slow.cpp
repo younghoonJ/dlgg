@@ -7,9 +7,10 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include "gotypes.h"
+
 namespace goboard {
-std::unique_ptr<Gostring>
-Gostring::merged_with(const Gostring &other) {
+std::unique_ptr<Gostring> Gostring::merged_with(const Gostring &other) {
     if (color != other.color)
         throw std::runtime_error("color != other.color");
     auto new_string = new Gostring(color);
@@ -17,14 +18,16 @@ Gostring::merged_with(const Gostring &other) {
         for (const auto &s : stones_)
             new_string->stones.emplace(s);
     for (const auto &lib : {liberties, other.liberties})
-        for (const auto &s : lib)
-            if (not new_string->isInLiberties(s))
-                new_string->liberties.emplace(s);
+        for (const auto &stone : lib)
+            if (not new_string->isInLiberties(stone))
+                new_string->liberties.emplace(stone);
+    for (const auto &stone : new_string->stones)
+        if (new_string->isInLiberties(stone))
+            new_string->liberties.erase(stone);
     return std::unique_ptr<Gostring>{new_string};
 }
 
-void
-Board::placeStone(gotypes::Player player, const gotypes::Point &point) {
+void Board::placeStone(gotypes::Player player, const gotypes::Point &point) {
     if (not checkGridBound(point))
         throw std::runtime_error("checkGridBound");
     if (isOccupied(point))
@@ -58,8 +61,9 @@ Board::placeStone(gotypes::Player player, const gotypes::Point &point) {
         std::make_unique<Gostring>(player, std::set{point}, liberties);
     for (const auto s : adjacent_same_color) {
         new_string = new_string->merged_with(*s);
+        _eraseOldString(*s);
     }
-    for (const auto p : new_string->stones) {
+    for (const auto &p : new_string->stones) {
         grid[p] = new_string.get();
     }
     for (const auto s : adjacent_opposite_color) {
@@ -69,20 +73,43 @@ Board::placeStone(gotypes::Player player, const gotypes::Point &point) {
         if (s->num_liberties() == 0)
             removeString(*s);
     }
+    _goStrings.emplace_back(new_string.release());
 }
 
-void
-Board::removeString(const Gostring &gostring) {
-    for (const auto &point_removed : gostring.stones) {
-        for (const auto &nbr : point_removed.neighbors()) {
+void Board::removeString(const Gostring &to_be_removed) {
+    for (const auto &point : to_be_removed.stones) {
+        for (const auto &nbr : point.neighbors()) {
             if (isOccupied(nbr)) {
                 auto nbr_string = grid.at(nbr);
-                if (not nbr_string->isEqual(gostring)) {
-                    nbr_string->add_liberty(point_removed);
+                if (not nbr_string->isEqual(to_be_removed)) {
+                    nbr_string->add_liberty(point);
                 }
             }
         }
-        grid[point_removed] = nullptr;
+        //        grid[point] = nullptr;
+        grid.erase(point);
+    }
+    _eraseOldString(to_be_removed);
+}
+
+Board::Board(const Board &other)
+    : num_rows(other.num_rows), num_cols(other.num_cols) {
+    for (const auto &ptr : other._goStrings)
+        _goStrings.emplace_back(new Gostring(*ptr));
+    for (const auto &ptr : _goStrings) {
+        for (const auto &stone : ptr->stones) {
+            grid[stone] = ptr.get();
+        }
     }
 }
+
+void Board::_eraseOldString(const Gostring &oldString) {
+    auto it = std::find_if(_goStrings.begin(), _goStrings.end(),
+                           [&](const std::unique_ptr<Gostring> &ptr) {
+                               return ptr->isEqual(oldString);
+                           });
+    _goStrings.erase(it);
+}
+
+
 }  // namespace goboard
