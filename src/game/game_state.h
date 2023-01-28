@@ -5,7 +5,7 @@
 #ifndef DLGO_GAME_STATE_H
 #define DLGO_GAME_STATE_H
 
-#include "goboard_slow.h"
+#include "goboard.h"
 
 namespace gamestate {
 struct GameState {
@@ -36,6 +36,30 @@ struct GameState {
     bool isValidMove(const gotypes::Move &move) const;
 };
 
+struct GameStateZob {
+    goboard::BoardZob board;
+    gotypes::Player next_player;
+    GameStateZob *prev_state;
+    std::vector<std::pair<gotypes::Player, uint64_t>> prev_state_hash;
+    gotypes::Move last_move;
+
+    GameStateZob(const goboard::BoardZob &board, gotypes::Player nextPlayer,
+                 GameStateZob *prevState, const gotypes::Move &lastMove);
+
+    std::unique_ptr<GameStateZob> applyMove(const gotypes::Move &move);
+
+    static std::unique_ptr<GameStateZob> newGame(int board_size);
+
+    bool isOver() const;
+
+    bool isMoveSelfCapture(gotypes::Player player,
+                           const gotypes::Move &move) const;
+
+    bool doesMoveViolateKo(gotypes::Player player,
+                           const gotypes::Move &move) const;
+
+    bool isValidMove(const gotypes::Move &move) const;
+};
 
 }  // namespace gamestate
 

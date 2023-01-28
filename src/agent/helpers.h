@@ -5,7 +5,7 @@
 #ifndef DLGO_HELPERS_H
 #define DLGO_HELPERS_H
 
-#include "src/game/goboard_slow.h"
+#include "src/game/goboard.h"
 
 namespace agent {
 bool isPointAnEye(const goboard::Board& board, const gotypes::Point& point,

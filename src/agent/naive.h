@@ -8,7 +8,7 @@
 #include <random>
 
 #include "base.h"
-#include "src/game/goboard_slow.h"
+#include "src/game/goboard.h"
 
 namespace agent {
 class RandomBot : public Agent {
@@ -28,6 +28,7 @@ public:
     }
 
     gotypes::Move selectMove(const gamestate::GameState &gameState) override;
+    gotypes::Move selectMove(const gamestate::GameStateZob &gameState) override;
 };
 }  // namespace agent
 #endif  //DLGO_NAIVE_H

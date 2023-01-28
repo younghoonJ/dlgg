@@ -11,6 +11,8 @@ namespace agent {
 class Agent {
 public:
     virtual gotypes::Move selectMove(const gamestate::GameState &gameState) = 0;
+    virtual gotypes::Move selectMove(
+        const gamestate::GameStateZob &gameState) = 0;
 };
 
 

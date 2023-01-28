@@ -17,6 +17,9 @@ enum class Player {
     white,
 };
 
+constexpr std::initializer_list<Player> iterColors = {Player::black,
+                                                      Player::white};
+
 inline Player other(const Player &player) {
     if (player == Player::black)
         return Player::white;

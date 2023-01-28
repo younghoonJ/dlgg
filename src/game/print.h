@@ -8,7 +8,7 @@
 #include <sstream>
 #include <string>
 
-#include "goboard_slow.h"
+#include "goboard.h"
 
 namespace print {
 
