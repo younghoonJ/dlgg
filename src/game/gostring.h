@@ -47,7 +47,9 @@ struct Gostring {
         liberties.insert(point);
     }
 
-    std::unique_ptr<Gostring> merged_with(const Gostring &other);
+    std::unique_ptr<Gostring> merge_with(const Gostring &other);
+
+    void merge_inplace(const Gostring &other);
 
     inline std::size_t num_liberties() const { return liberties.size(); };
 };

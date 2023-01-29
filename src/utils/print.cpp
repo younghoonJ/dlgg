@@ -1,20 +1,11 @@
 //
-// Created by younghoon on 23. 1. 28.
+// Created by younghoon on 23. 1. 29.
 //
+#include "print.h"
 
-#ifndef DLGO_PRINT_H
-#define DLGO_PRINT_H
-#include <iostream>
-#include <sstream>
-#include <string>
+namespace utils {
 
-#include "goboard.h"
-
-namespace print {
-
-const char* COLS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-inline void printBoard(const goboard::Board& board) {
+void printBoard(const goboard::Board& board) {
     std::ostringstream oss;
     for (auto row = board.num_rows; row > 0; --row) {
         oss << (row <= 9 ? " " : "") << row << ' ';
@@ -30,9 +21,9 @@ inline void printBoard(const goboard::Board& board) {
     for (auto i = 0; i < board.num_cols; ++i)
         oss << COLS[i];
     std::cout << oss.str() << '\n';
-};
+}
 
-inline void printMove(gotypes::Player player, const gotypes::Move& move) {
+void printMove(gotypes::Player player, const gotypes::Move& move) {
     std::ostringstream oss;
     if (player == gotypes::Player::black)
         oss << "black ";
@@ -47,5 +38,4 @@ inline void printMove(gotypes::Player player, const gotypes::Move& move) {
         oss << COLS[move.point.col - 1] << move.point.row;
     std::cout << oss.str() << '\n';
 }
-}  // namespace print
-#endif  //DLGO_PRINT_H
+}  // namespace utils

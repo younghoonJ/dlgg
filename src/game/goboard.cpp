@@ -44,22 +44,25 @@ void Board::placeStone(gotypes::Player player, const gotypes::Point &point) {
         }
     }
 
-    auto new_string = std::make_unique<gostring::Gostring>(
-        player, std::set{point}, liberties);
-
+    auto new_string = new gostring::Gostring(player, {point}, liberties);
+    _goStrings.emplace_back(new_string);
+    //    for (const auto go_str : adjacent_same_color) {
+    //        new_string = new_string->merge_with(*go_str);
+    //        _eraseOldString(*go_str);
+    //    }
     for (const auto go_str : adjacent_same_color) {
-        new_string = new_string->merged_with(*go_str);
+        new_string->merge_inplace(*go_str);
         _eraseOldString(*go_str);
     }
+
     for (const auto &stone : new_string->stones) {
-        grid[stone] = new_string.get();
+        grid[stone] = new_string;
     }
     for (const auto go_str : adjacent_opposite_color) {
         go_str->remove_liberty(point);
         if (go_str->num_liberties() == 0)
             removeString(*go_str);
     }
-    _goStrings.emplace_back(new_string.release());
 }
 
 void Board::removeString(const gostring::Gostring &to_be_removed) {
@@ -127,16 +130,16 @@ void BoardZob::placeStone(gotypes::Player player, const gotypes::Point &point) {
         }
     }
 
-    auto new_string = std::make_unique<gostring::Gostring>(
-        player, std::set{point}, liberties);
+    auto new_string = new gostring::Gostring(player, {point}, liberties);
+    _goStrings.emplace_back(new_string);
 
     for (const auto go_str : adjacent_same_color) {
-        new_string = new_string->merged_with(*go_str);
+        //        new_string = new_string->merge_with(*go_str);
+        new_string->merge_inplace(*go_str);
         _eraseOldString(*go_str);
     }
-    for (const auto &stone : new_string->stones) {
-        grid[stone] = new_string.get();
-    }
+    for (const auto &stone : new_string->stones)
+        grid[stone] = new_string;
 
     _hash ^= zobrist::get(point.row, point.col, player);
 
@@ -145,7 +148,6 @@ void BoardZob::placeStone(gotypes::Player player, const gotypes::Point &point) {
         if (go_str->num_liberties() == 0)
             removeString(*go_str);
     }
-    _goStrings.emplace_back(new_string.release());
 }
 
 void BoardZob::removeString(const gostring::Gostring &to_be_removed) {
