@@ -8,10 +8,12 @@
 #include "goboard.h"
 
 namespace gamestate {
+
+
 struct GameState {
     goboard::Board board;
     gotypes::Player next_player;
-    GameState *prev_state;
+    std::unique_ptr<GameState> prev_state;
     gotypes::Move last_move;
 
     GameState(const goboard::Board &board, gotypes::Player nextPlayer,
@@ -39,7 +41,7 @@ struct GameState {
 struct GameStateZob {
     goboard::BoardZob board;
     gotypes::Player next_player;
-    GameStateZob *prev_state;
+    std::unique_ptr<GameStateZob> prev_state;
     std::vector<std::pair<gotypes::Player, uint64_t>> prev_state_hash;
     gotypes::Move last_move;
 

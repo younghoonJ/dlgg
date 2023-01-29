@@ -9,11 +9,7 @@ void run_naive(int board_size = 19) {
     auto bot_black = agent::RandomBot();
     auto bot_white = agent::RandomBot();
 
-    std::vector<std::unique_ptr<gamestate::GameState>> game_states;
-    auto new_game = gamestate::GameState::newGame(board_size);
-    game_states.emplace_back(new_game.release());
-    gamestate::GameState* game = game_states.back().get();
-
+    auto game = gamestate::GameState::newGame(board_size);
     while (not game->isOver()) {
         //                usleep(1000 * 1000);
         std::cout << "\033[2J\033[1;1H";
@@ -21,8 +17,8 @@ void run_naive(int board_size = 19) {
         auto bot_move = (isBlack(game->next_player) ? bot_black : bot_white)
                             .selectMove(*game);
         //        utils::printMove(game->next_player, bot_move);
-        game_states.push_back(game->applyMove(bot_move));
-        game = game_states.back().get();
+        auto ptr_ = game.release();  // to prevent duplicated destructor call
+        game      = ptr_->applyMove(bot_move);
     }
 };
 
@@ -30,31 +26,24 @@ void run_naive_zob(int board_size = 19) {
     auto bot_black = agent::RandomBot();
     auto bot_white = agent::RandomBot();
 
-    std::vector<std::unique_ptr<gamestate::GameStateZob>> game_states;
-    auto new_game = gamestate::GameStateZob::newGame(board_size);
-    game_states.emplace_back(new_game.release());
-    gamestate::GameStateZob* game = game_states.back().get();
-
+    auto game = gamestate::GameStateZob::newGame(board_size);
     while (not game->isOver()) {
         //        usleep(1000 * 1000);
         std::cout << "\033[2J\033[1;1H";
         utils::printBoard(game->board);
         auto bot_move = (isBlack(game->next_player) ? bot_black : bot_white)
                             .selectMove(*game);
-        utils::printMove(game->next_player, bot_move);
-        game_states.push_back(game->applyMove(bot_move));
-        game = game_states.back().get();
+        //        utils::printMove(game->next_player, bot_move);
+        auto ptr_ = game.release();  // to prevent duplicated destructor call
+        game      = ptr_->applyMove(bot_move);
     }
 }
 
 auto time_run(int num_iter, void (*run_game_fn)(int), int board_size) {
-    std::chrono::steady_clock::time_point begin =
-        std::chrono::steady_clock::now();
-    for (int i = 0; i < num_iter; ++i) {
+    auto begin = std::chrono::steady_clock::now();
+    for (int i = 0; i < num_iter; ++i)
         run_game_fn(board_size);
-    }
-    std::chrono::steady_clock::time_point end =
-        std::chrono::steady_clock::now();
+    auto end = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
         .count();
 }
@@ -75,11 +64,9 @@ void player_game(int board_size) {
                     std::string human_input;
                     std::cin >> human_input;
                     auto point = utils::pointFromCoords(human_input);
-                    if (game->board.isOccupied(point)) {
-                        std::cout << "there is a stone at: " << human_input
-                                  << '\n';
-                    } else if (not game->board.checkGridBound(point)) {
-                        std::cout << "invalid value: " << human_input << '\n';
+                    if (game->board.isOccupied(point) or
+                        not game->board.checkGridBound(point)) {
+                        std::cout << "invalid move: " << human_input << '\n';
                     } else {
                         return gotypes::Move::play(point);
                     }
@@ -98,17 +85,17 @@ int main() {
 
     int board_size = 9;
 
-    //    int testN      = 100;
-    //    auto naive_time = time_run(testN, run_naive, board_size);
-    //    auto zob_time   = time_run(testN, run_naive, board_size);
-    //
-    //    std::cout << "Naive\t" << testN << " random run: " << naive_time << "[µs]"
-    //              << std::endl;
-    //
-    //    std::cout << "Zobrist\t" << testN << " random run: " << zob_time << "[µs]"
-    //              << std::endl;
+    int testN       = 1;
+    auto naive_time = time_run(testN, run_naive, board_size);
+    auto zob_time   = time_run(testN, run_naive, board_size);
 
-    player_game(board_size);
+    std::cout << "Naive\t" << testN << " random run: " << naive_time << "[µs]"
+              << std::endl;
+
+    std::cout << "Zobrist\t" << testN << " random run: " << zob_time << "[µs]"
+              << std::endl;
+
+    //    player_game(board_size);
 
     return 0;
 }

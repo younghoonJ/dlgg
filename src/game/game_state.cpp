@@ -49,13 +49,13 @@ bool GameState::doesMoveViolateKo(gotypes::Player player,
     auto next_board = board;
     next_board.placeStone(player, move.point);
     auto next_player_ = other(player);
-    auto past_state   = prev_state;
+    auto past_state   = prev_state.get();
     while (past_state != nullptr) {
         if (past_state->next_player == next_player_ and
             past_state->board == next_board) {
             return true;
         }
-        past_state = past_state->prev_state;
+        past_state = past_state->prev_state.get();
     }
     return false;
 }
@@ -107,7 +107,7 @@ GameStateZob::GameStateZob(goboard::BoardZob board, gotypes::Player nextPlayer,
       next_player(nextPlayer),
       prev_state(prevState),
       last_move(lastMove) {
-    if (prevState != nullptr) {
+    if (prev_state) {
         for (const auto &p : prevState->prev_state_hash)
             prev_state_hash.emplace_back(p);
 
@@ -146,6 +146,5 @@ bool GameStateZob::isValidMove(const gotypes::Move &move) const {
            (not isMoveSelfCapture(next_player, move)) and
            (not doesMoveViolateKo(next_player, move));
 }
-
 
 }  // namespace gamestate
