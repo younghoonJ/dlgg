@@ -88,6 +88,4 @@ int main() {
               << std::endl;
 
     //    player_game(board_size);
-
-    return 0;
 }
