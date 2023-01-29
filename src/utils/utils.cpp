@@ -1,7 +1,7 @@
 //
 // Created by younghoon on 23. 1. 29.
 //
-#include "print.h"
+#include "utils.h"
 
 namespace utils {
 
@@ -25,11 +25,7 @@ void printBoard(const goboard::Board& board) {
 
 void printMove(gotypes::Player player, const gotypes::Move& move) {
     std::ostringstream oss;
-    if (player == gotypes::Player::black)
-        oss << "black ";
-    else
-        oss << "white ";
-
+    oss << (player == gotypes::Player::black ? "black" : "white");
     if (move.isPass()) {
         oss << "passes";
     } else if (move.isResign())
@@ -37,5 +33,18 @@ void printMove(gotypes::Player player, const gotypes::Move& move) {
     else
         oss << COLS[move.point.col - 1] << move.point.row;
     std::cout << oss.str() << '\n';
+}
+
+gotypes::Point pointFromCoords(const std::string& coord) {
+    auto col = [&]() -> int {
+        for (auto i = 0; i < LEN_COLS; ++i)
+            if (COLS[i] == coord.at(0))
+                return i + 1;
+        return -1;
+    }();
+    if (col == -1)
+        throw std::runtime_error("wrong input:" + coord);
+    auto row = stoi(coord.substr(1));
+    return {row, col};
 }
 }  // namespace utils
