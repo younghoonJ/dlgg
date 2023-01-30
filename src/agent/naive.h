@@ -28,7 +28,6 @@ public:
     }
 
     gotypes::Move selectMove(const gamestate::GameState &gameState) override;
-    gotypes::Move selectMove(const gamestate::GameStateZob &gameState) override;
 };
 }  // namespace agent
 #endif  //DLGO_NAIVE_H

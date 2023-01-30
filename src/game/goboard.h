@@ -15,7 +15,6 @@
 
 namespace goboard {
 
-
 class Board {
 protected:
     std::map<gotypes::Point, gostring::Gostring *> grid;

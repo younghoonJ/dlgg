@@ -7,74 +7,76 @@
 #include <utility>
 
 namespace gamestate {
-std::unique_ptr<GameState> GameState::applyMove(const gotypes::Move &move) {
-    auto next_board = board;
-    if (move.isPlay())
-        next_board.placeStone(next_player, move.point);
-    return std::make_unique<GameState>(next_board, other(next_player), this,
-                                       move);
-}
 
-std::unique_ptr<GameState> GameState::newGame(int board_size) {
-    return std::make_unique<GameState>(goboard::Board(board_size, board_size),
-                                       gotypes::Player::black, nullptr,
-                                       gotypes::Move::None());
-}
 
 bool GameState::isOver() const {
-    if (last_move.isNone())
-        return false;
-    if (last_move.isResign())
-        return true;
-    auto second_last_move = prev_state->last_move;
-    if (second_last_move.isNone())
-        return false;
-    return last_move.isPass() and second_last_move.isPass();
+    if (lastMove().isNone()) return false;
+    if (lastMove().isResign()) return true;
+    if (prevState().lastMove().isNone()) return false;
+    return lastMove().isPass() and prevState().lastMove().isPass();
 }
 
 bool GameState::isMoveSelfCapture(gotypes::Player player,
                                   const gotypes::Move &move) const {
-    if (not move.isPlay())
-        return false;
-    auto next_board = board;
+    if (not move.isPlay()) return false;
+    auto next_board = board();
     next_board.placeStone(player, move.point);
     auto new_string = next_board.getGoString(move.point);
     return new_string.num_liberties() == 0;
 }
 
-bool GameState::doesMoveViolateKo(gotypes::Player player,
-                                  const gotypes::Move &move) const {
-    if (not move.isPlay())
-        return false;
-    auto next_board = board;
+bool GameState::isValidMove(const gotypes::Move &move) const {
+    if (isOver()) return false;
+    if (move.isPass() or move.isResign()) return true;
+    return (not board().isOccupied(move.point)) and
+           (not isMoveSelfCapture(nextPlayer(), move)) and
+           (not doesMoveViolateKo(nextPlayer(), move));
+}
+
+std::unique_ptr<GameState> GameStateSlow::applyMove(const gotypes::Move &move) {
+    auto next_board = _board;
+    if (move.isPlay()) next_board.placeStone(_next_player, move.point);
+    return std::make_unique<GameStateSlow>(next_board, other(_next_player),
+                                           this, move);
+}
+
+bool GameStateSlow::doesMoveViolateKo(gotypes::Player player,
+                                      const gotypes::Move &move) const {
+    if (not move.isPlay()) return false;
+    auto next_board = _board;
     next_board.placeStone(player, move.point);
     auto next_player_ = other(player);
-    auto past_state   = prev_state.get();
-    while (past_state != nullptr) {
-        if (past_state->next_player == next_player_ and
-            past_state->board == next_board) {
+    auto past_state   = _prev_state.get();
+    while (past_state) {
+        if (_prev_state->_next_player == next_player_ and
+            past_state->board() == next_board) {
             return true;
         }
-        past_state = past_state->prev_state.get();
+        past_state = past_state->_prev_state.get();
     }
     return false;
 }
 
-bool GameState::isValidMove(const gotypes::Move &move) const {
-    if (isOver())
-        return false;
-    if (move.isPass() or move.isResign())
-        return true;
-    return (not board.isOccupied(move.point)) and
-           (not isMoveSelfCapture(next_player, move)) and
-           (not doesMoveViolateKo(next_player, move));
+GameStateSlow::GameStateSlow(const goboard::Board &board,
+                             gotypes::Player nextPlayer,
+                             GameStateSlow *prevState,
+                             const gotypes::Move &lastMove)
+    : _board(board),
+      _next_player(nextPlayer),
+      _prev_state(prevState),
+      _last_move(lastMove) {}
+
+std::unique_ptr<GameState> GameStateFast::applyMove(const gotypes::Move &move) {
+    auto next_board = _board;
+    if (move.isPlay()) next_board.placeStone(_next_player, move.point);
+    return std::make_unique<GameStateFast>(next_board, other(_next_player),
+                                           this, move);
 }
 
-bool GameStateZob::doesMoveViolateKo(gotypes::Player player,
-                                     const gotypes::Move &move) const {
-    if (not move.isPlay())
-        return false;
-    auto next_board = board;
+bool GameStateFast::doesMoveViolateKo(gotypes::Player player,
+                                      const gotypes::Move &move) const {
+    if (not move.isPlay()) return false;
+    auto next_board = _board;
     next_board.placeStone(player, move.point);
     auto other_player = other(player);
     auto next_hash    = next_board.getHash();
@@ -85,66 +87,20 @@ bool GameStateZob::doesMoveViolateKo(gotypes::Player player,
                        });
 }
 
-std::unique_ptr<GameStateZob> GameStateZob::applyMove(
-    const gotypes::Move &move) {
-    auto next_board = board;
-    if (move.isPlay())
-        next_board.placeStone(next_player, move.point);
-    return std::make_unique<GameStateZob>(next_board, other(next_player), this,
-                                          move);
-}
-
-std::unique_ptr<GameStateZob> GameStateZob::newGame(int board_size) {
-    return std::make_unique<GameStateZob>(
-        goboard::BoardZob(board_size, board_size), gotypes::Player::black,
-        nullptr, gotypes::Move::None());
-}
-
-GameStateZob::GameStateZob(goboard::BoardZob board, gotypes::Player nextPlayer,
-                           GameStateZob *prevState,
-                           const gotypes::Move &lastMove)
-    : board(std::move(board)),
-      next_player(nextPlayer),
-      prev_state(prevState),
-      last_move(lastMove) {
-    if (prev_state) {
-        for (const auto &p : prevState->prev_state_hash)
+GameStateFast::GameStateFast(const goboard::BoardZob &board,
+                             gotypes::Player nextPlayer,
+                             GameStateFast *prevState,
+                             const gotypes::Move &lastMove)
+    : _board(board),
+      _next_player(nextPlayer),
+      _prev_state(prevState),
+      _last_move(lastMove) {
+    if (_prev_state) {
+        for (const auto &p : _prev_state->prev_state_hash)
             prev_state_hash.emplace_back(p);
 
-        prev_state_hash.emplace_back(prevState->next_player,
-                                     prevState->board.getHash());
+        prev_state_hash.emplace_back(_prev_state->nextPlayer(),
+                                     _prev_state->_board.getHash());
     }
 }
-
-bool GameStateZob::isOver() const {
-    if (last_move.isNone())
-        return false;
-    if (last_move.isResign())
-        return true;
-    auto second_last_move = prev_state->last_move;
-    if (second_last_move.isNone())
-        return false;
-    return last_move.isPass() and second_last_move.isPass();
-}
-
-bool GameStateZob::isMoveSelfCapture(gotypes::Player player,
-                                     const gotypes::Move &move) const {
-    if (not move.isPlay())
-        return false;
-    auto next_board = board;
-    next_board.placeStone(player, move.point);
-    auto new_string = next_board.getGoString(move.point);
-    return new_string.num_liberties() == 0;
-}
-
-bool GameStateZob::isValidMove(const gotypes::Move &move) const {
-    if (isOver())
-        return false;
-    if (move.isPass() or move.isResign())
-        return true;
-    return (not board.isOccupied(move.point)) and
-           (not isMoveSelfCapture(next_player, move)) and
-           (not doesMoveViolateKo(next_player, move));
-}
-
 }  // namespace gamestate
