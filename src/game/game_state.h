@@ -22,10 +22,30 @@ public:
     virtual std::unique_ptr<GameState> applyMove(const gotypes::Move &move) = 0;
     virtual bool doesMoveViolateKo(gotypes::Player player,
                                    const gotypes::Move &move) const         = 0;
-    bool isOver() const;
-    bool isMoveSelfCapture(gotypes::Player player,
-                           const gotypes::Move &move) const;
-    bool isValidMove(const gotypes::Move &move) const;
+
+    inline bool isOver() const {
+        if (lastMove().isNone()) return false;
+        if (lastMove().isResign()) return true;
+        if (prevState().lastMove().isNone()) return false;
+        return lastMove().isPass() and prevState().lastMove().isPass();
+    };
+
+    inline virtual bool isMoveSelfCapture(gotypes::Player player,
+                                          const gotypes::Move &move) const {
+        if (not move.isPlay()) return false;
+        auto next_board = board();
+        next_board.placeStone(player, move.point);
+        auto new_string = next_board.getGoString(move.point);
+        return new_string.num_liberties() == 0;
+    }
+
+    inline bool isValidMove(const gotypes::Move &move) const {
+        if (isOver()) return false;
+        if (move.isPass() or move.isResign()) return true;
+        return (not board().isOccupied(move.point)) and
+               (not isMoveSelfCapture(nextPlayer(), move)) and
+               (not doesMoveViolateKo(nextPlayer(), move));
+    }
 };
 
 class GameStateSlow : public GameState {
@@ -54,17 +74,23 @@ public:
 
     bool doesMoveViolateKo(gotypes::Player player,
                            const gotypes::Move &move) const override;
+
+    static inline std::unique_ptr<GameState> newGame(int board_size) {
+        return std::make_unique<GameStateSlow>(
+            goboard::Board(board_size, board_size), gotypes::Player::black,
+            nullptr, gotypes::Move::None());
+    }
 };
 
 class GameStateFast : public GameState {
-    goboard::BoardZob _board;
+    goboard::BoardFast _board;
     gotypes::Player _next_player;
     std::unique_ptr<GameStateFast> _prev_state;
     gotypes::Move _last_move;
     std::vector<std::pair<gotypes::Player, uint64_t>> prev_state_hash;
 
 public:
-    GameStateFast(const goboard::BoardZob &board, gotypes::Player nextPlayer,
+    GameStateFast(const goboard::BoardFast &board, gotypes::Player nextPlayer,
                   GameStateFast *prevState, const gotypes::Move &lastMove);
 
     inline const goboard::Board &board() const override { return _board; }
@@ -79,14 +105,21 @@ public:
 
     bool doesMoveViolateKo(gotypes::Player player,
                            const gotypes::Move &move) const override;
+
+    static inline std::unique_ptr<GameState> newGame(
+        int board_size, goboard::pointTable_t *nbrtable) {
+        return std::make_unique<GameStateFast>(
+            goboard::BoardFast(board_size, board_size, nbrtable),
+            gotypes::Player::black, nullptr, gotypes::Move::None());
+    }
+
+    inline bool isMoveSelfCapture(gotypes::Player player,
+                                  const gotypes::Move &move) const override {
+        if (not move.isPlay()) return false;
+        return _board.isSelfCapture(player, move.point);
+    };
 };
 
-template<class T>
-std::unique_ptr<GameState> newGame(int board_size) {
-    return std::make_unique<T>(goboard::Board(board_size, board_size),
-                               gotypes::Player::black, nullptr,
-                               gotypes::Move::None());
-}
 }  // namespace gamestate
 
 #endif  //DLGO_GAME_STATE_H

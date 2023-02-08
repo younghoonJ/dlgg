@@ -15,6 +15,11 @@
 
 namespace goboard {
 
+using pointTable_t = std::vector<std::vector<std::vector<gotypes::Point>>>;
+pointTable_t makeNeighborTable(int board_size);
+
+pointTable_t makeCornerTable(int board_size);
+
 class Board {
 protected:
     std::map<gotypes::Point, gostring::Gostring *> grid;
@@ -63,18 +68,23 @@ public:
     };
 };
 
-class BoardZob : public Board {
+class BoardFast : public Board {
     uint64_t _hash;
+    pointTable_t *nbrtable;
 
 public:
-    BoardZob(int numRows, int numCols, uint64_t hash = zobrist::EMPTY_BOARD)
-        : Board(numRows, numCols), _hash(hash){};
+    BoardFast(int numRows, int numCols, pointTable_t *nbrtable = nullptr,
+              uint64_t hash = zobrist::EMPTY_BOARD)
+        : Board(numRows, numCols), _hash(hash), nbrtable(nbrtable){};
 
     inline uint64_t getHash() const { return _hash; }
 
     void placeStone(gotypes::Player player,
                     const gotypes::Point &point) override;
     void removeString(const gostring::Gostring &to_be_removed) override;
+
+    bool isSelfCapture(gotypes::Player player,
+                       const gotypes::Point &point) const;
 };
 
 

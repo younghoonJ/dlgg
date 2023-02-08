@@ -12,12 +12,43 @@
 
 namespace goboard {
 
+pointTable_t makeNeighborTable(int board_size) {
+    auto bound_max = board_size + 1;
+    auto res       = std::vector<std::vector<std::vector<gotypes::Point>>>(
+        bound_max, std::vector<std::vector<gotypes::Point>>(
+                       bound_max, std::vector<gotypes::Point>()));
+    for (int r = 1; r < bound_max; ++r) {
+        for (int c = 1; c < bound_max; ++c) {
+            for (auto &nbr : gotypes::Point{r, c}.neighbors()) {
+                if ((1 <= nbr.row and nbr.row < bound_max) and
+                    (1 <= nbr.col and nbr.col < bound_max))
+                    res[r][c].emplace_back(nbr);
+            }
+        }
+    }
+    return res;
+}
+
+pointTable_t makeCornerTable(int board_size) {
+    auto bound_max = board_size + 1;
+    auto res       = std::vector<std::vector<std::vector<gotypes::Point>>>(
+        bound_max, std::vector<std::vector<gotypes::Point>>(
+                       bound_max, std::vector<gotypes::Point>()));
+    for (int r = 1; r < bound_max; ++r) {
+        for (int c = 1; c < bound_max; ++c) {
+            for (auto &nbr : gotypes::Point{r, c}.corners()) {
+                if ((1 <= nbr.row and nbr.row < bound_max) and
+                    (1 <= nbr.col and nbr.col < bound_max))
+                    res[r][c].emplace_back(nbr);
+            }
+        }
+    }
+    return res;
+}
 
 void Board::placeStone(gotypes::Player player, const gotypes::Point &point) {
-    if (not checkGridBound(point))
-        throw std::runtime_error("checkGridBound");
-    if (isOccupied(point))
-        throw std::runtime_error("is already occupied");
+    if (not checkGridBound(point)) throw std::runtime_error("checkGridBound");
+    if (isOccupied(point)) throw std::runtime_error("is already occupied");
 
     std::vector<gostring::Gostring *> adjacent_same_color;
     std::vector<gostring::Gostring *> adjacent_opposite_color;
@@ -33,8 +64,7 @@ void Board::placeStone(gotypes::Player player, const gotypes::Point &point) {
     };
 
     for (const auto &nbr : point.neighbors()) {
-        if (not checkGridBound(nbr))
-            continue;
+        if (not checkGridBound(nbr)) continue;
         if (not isOccupied(nbr)) {
             liberties.insert(nbr);
         } else if (getColor(nbr) == player) {
@@ -60,8 +90,7 @@ void Board::placeStone(gotypes::Player player, const gotypes::Point &point) {
     }
     for (const auto go_str : adjacent_opposite_color) {
         go_str->remove_liberty(point);
-        if (go_str->num_liberties() == 0)
-            removeString(*go_str);
+        if (go_str->num_liberties() == 0) removeString(*go_str);
     }
 }
 
@@ -99,11 +128,10 @@ void Board::_eraseOldString(const gostring::Gostring &oldString) {
                      }));
 }
 
-void BoardZob::placeStone(gotypes::Player player, const gotypes::Point &point) {
-    if (not checkGridBound(point))
-        throw std::runtime_error("checkGridBound");
-    if (isOccupied(point))
-        throw std::runtime_error("is already occupied");
+void BoardFast::placeStone(gotypes::Player player,
+                           const gotypes::Point &point) {
+    if (not checkGridBound(point)) throw std::runtime_error("checkGridBound");
+    if (isOccupied(point)) throw std::runtime_error("is already occupied");
 
     std::vector<gostring::Gostring *> adjacent_same_color;
     std::vector<gostring::Gostring *> adjacent_opposite_color;
@@ -118,15 +146,14 @@ void BoardZob::placeStone(gotypes::Player player, const gotypes::Point &point) {
         }
     };
 
-    for (const auto &nbr : point.neighbors()) {
-        if (not checkGridBound(nbr))
-            continue;
-        if (not isOccupied(nbr)) {
+    for (const auto &nbr : nbrtable->at(point.row).at(point.col)) {
+        auto it = grid.find(nbr);
+        if (it == grid.end()) {
             liberties.insert(nbr);
-        } else if (getColor(nbr) == player) {
-            push_if_not_in(adjacent_same_color, grid.at(nbr));
+        } else if (it->second->color == player) {
+            push_if_not_in(adjacent_same_color, it->second);
         } else {
-            push_if_not_in(adjacent_opposite_color, grid.at(nbr));
+            push_if_not_in(adjacent_opposite_color, it->second);
         }
     }
 
@@ -145,18 +172,17 @@ void BoardZob::placeStone(gotypes::Player player, const gotypes::Point &point) {
 
     for (const auto go_str : adjacent_opposite_color) {
         go_str->remove_liberty(point);
-        if (go_str->num_liberties() == 0)
-            removeString(*go_str);
+        if (go_str->num_liberties() == 0) removeString(*go_str);
     }
 }
 
-void BoardZob::removeString(const gostring::Gostring &to_be_removed) {
+void BoardFast::removeString(const gostring::Gostring &to_be_removed) {
     for (const auto &point : to_be_removed.stones) {
-        for (const auto &nbr : point.neighbors()) {
-            if (isOccupied(nbr)) {
-                auto nbr_string = grid.at(nbr);
-                if (not nbr_string->isEqual(to_be_removed)) {
-                    nbr_string->add_liberty(point);
+        for (const auto &nbr : nbrtable->at(point.row).at(point.col)) {
+            auto nbrstr_it = grid.find(nbr);
+            if (nbrstr_it != grid.end()) {
+                if (not nbrstr_it->second->isEqual(to_be_removed)) {
+                    nbrstr_it->second->add_liberty(point);
                 }
             }
         }
@@ -164,6 +190,30 @@ void BoardZob::removeString(const gostring::Gostring &to_be_removed) {
         _hash ^= zobrist::get(point.row, point.col, to_be_removed.color);
     }
     _eraseOldString(to_be_removed);
+}
+
+bool BoardFast::isSelfCapture(gotypes::Player player,
+                              const gotypes::Point &point) const {
+    std::vector<gostring::Gostring *> friendly_strings;
+    for (const auto &nbr : nbrtable->at(point.row).at(point.col)) {
+        auto nbrstr_it = grid.find(nbr);
+        if (nbrstr_it == grid.end()) {
+            // has a liberty
+            return false;
+        } else if (nbrstr_it->second->color == player) {
+            friendly_strings.push_back(nbrstr_it->second);
+        } else {
+            if (nbrstr_it->second->num_liberties() == 1) {
+                // real capture, not self capture
+                return false;
+            }
+        }
+    }
+    if (std::all_of(
+            friendly_strings.begin(), friendly_strings.end(),
+            [&](gostring::Gostring *r) { return r->num_liberties() == 1; }))
+        return true;
+    return false;
 }
 
 

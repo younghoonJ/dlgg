@@ -21,8 +21,7 @@ constexpr std::initializer_list<Player> iterColors = {Player::black,
                                                       Player::white};
 
 inline Player other(const Player &player) {
-    if (player == Player::black)
-        return Player::white;
+    if (player == Player::black) return Player::white;
     return Player::black;
 }
 
@@ -39,6 +38,11 @@ struct Point {
     inline std::array<Point, 4> neighbors() const {
         return {Point{row - 1, col}, Point{row + 1, col}, Point{row, col - 1},
                 Point{row, col + 1}};
+    }
+
+    inline std::array<Point, 4> corners() const {
+        return {Point{row - 1, col - 1}, Point{row - 1, col + 1},
+                Point{row + 1, col - 1}, Point{row + 1, col + 1}};
     }
 
     bool operator==(const Point &other) const {
