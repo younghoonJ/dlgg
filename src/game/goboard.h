@@ -50,8 +50,20 @@ public:
         return grid.at(point)->color;
     };
 
+    inline gotypes::Player getColorOrNull(const gotypes::Point &point) const {
+        auto it = grid.find(point);
+        if (it == grid.end()) return gotypes::Player::none;
+        return it->second->color;
+    }
+
     inline gostring::Gostring &getGoString(const gotypes::Point &point) const {
         return *grid.at(point);
+    }
+
+    inline std::tuple<int, int> countStons() {
+        for (auto r = 1; r < num_rows + 1; ++r) {
+            for (auto c = 1; c < num_cols + 1; ++c) {}
+        }
     }
 
     virtual void placeStone(gotypes::Player player,

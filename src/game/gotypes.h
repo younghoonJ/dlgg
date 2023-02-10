@@ -15,17 +15,20 @@ namespace gotypes {
 enum class Player {
     black,
     white,
+    none,
 };
 
 constexpr std::initializer_list<Player> iterColors = {Player::black,
                                                       Player::white};
 
-inline Player other(const Player &player) {
+inline Player
+other(const Player &player) {
     if (player == Player::black) return Player::white;
     return Player::black;
 }
 
-inline bool isBlack(const Player &player) {
+inline bool
+isBlack(const Player &player) {
     return player == Player::black;
 }
 

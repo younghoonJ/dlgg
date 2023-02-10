@@ -91,6 +91,5 @@ int main() {
               << std::endl;
     std::cout << "NaiveFast\t" << testN << " random run: " << naive_fast_time
               << "[µs]" << std::endl;
-
     //        player_game(board_size);
 }
