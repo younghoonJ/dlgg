@@ -29,8 +29,8 @@ public:
         return lastMove().isPass() and prevState().lastMove().isPass();
     };
 
-    inline virtual bool isMoveSelfCapture(gotypes::Player player,
-                                          const gotypes::Move &move) const {
+    inline bool isMoveSelfCapture(gotypes::Player player,
+                                  const gotypes::Move &move) const {
         if (not move.isPlay()) return false;
         auto next_board = board();
         next_board.placeStone(player, move.point);
@@ -61,7 +61,7 @@ public:
             7.5};
     }
 
-    inline virtual std::vector<gotypes::Move> legalMoves() const {
+    inline std::vector<gotypes::Move> legalMoves() const {
         std::vector<gotypes::Move> moves;
         for (int row = 1; row < board().num_rows + 1; ++row) {
             for (int col = 1; col < board().num_cols + 1; ++col) {
@@ -84,7 +84,8 @@ public:
 
     inline const GameStateSlow &prevState() const { return *_prev_state; }
 
-    inline std::unique_ptr<GameStateSlow> applyMove(const gotypes::Move &move) const {
+    inline std::unique_ptr<GameStateSlow> applyMove(
+        const gotypes::Move &move) const {
         auto next_board = _board;
         if (move.isPlay()) next_board.placeStone(_next_player, move.point);
         return std::make_unique<GameStateSlow>(
@@ -93,7 +94,7 @@ public:
     }
 
     inline bool doesMoveViolateKo(gotypes::Player player,
-                           const gotypes::Move &move) const {
+                                  const gotypes::Move &move) const {
         if (not move.isPlay()) return false;
         auto next_board = _board;
         next_board.placeStone(player, move.point);
