@@ -9,6 +9,8 @@
 #include "goboard.h"
 #include "gotypes.h"
 
+class GameState;
+
 namespace scoring {
 enum TerritoryMark {
     BLACK_STONE,
@@ -18,7 +20,7 @@ enum TerritoryMark {
     DAME,
 };
 
-class Territory {
+struct Territory {
     int num_black_territory = 0;
     int num_white_territory = 0;
     int num_black_stones    = 0;
@@ -26,25 +28,24 @@ class Territory {
     int num_dame            = 0;
     std::vector<gotypes::Point> dame_points;
 
-public:
     explicit Territory(const std::map<gotypes::Point, TerritoryMark>& state);
     static Territory evaluate(const goboard::Board& board);
 };
 
 class GameResult {
 public:
-    int b;
-    int w;
-    int komi;
+    double b;
+    double w;
+    double komi;
 
-    GameResult(int b, int w, int komi) : b(b), w(w), komi(komi) {}
+    GameResult(double b, double w, double komi) : b(b), w(w), komi(komi) {}
 
     inline gotypes::Player winner() const {
         if (b > w + komi) return gotypes::Player::black;
         return gotypes::Player::white;
     };
 
-    inline int winning_margin() const { return std::abs(b - w - komi); };
+    inline double winning_margin() const { return std::abs(b - w - komi); };
 
     friend std::ostream& operator<<(std::ostream& os, const GameResult& gs) {
         auto val = gs.w + gs.komi;
@@ -52,6 +53,7 @@ public:
         os << "W+" << (val - gs.b);
         return os;
     }
+
 };
 
 

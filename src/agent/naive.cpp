@@ -6,7 +6,8 @@
 #include <algorithm>
 
 namespace agent {
-gotypes::Move RandomBot::selectMove(const gamestate::GameState &gameState) {
+gotypes::Move
+RandomBot::selectMove(const gamestate::GameStateSlow &gameState) {
     std::vector<gotypes::Point> candidates;
     for (auto r = 1; r < gameState.board().num_rows + 1; ++r) {
         for (auto c = 1; c < gameState.board().num_cols + 1; ++c) {
@@ -22,9 +23,9 @@ gotypes::Move RandomBot::selectMove(const gamestate::GameState &gameState) {
     return gotypes::Move::play(candidates[rng() % candidates.size()]);
 }
 
-bool RandomBot::isPointAnEye(const goboard::Board &board,
-                             const gotypes::Point &point,
-                             gotypes::Player color) {
+bool
+RandomBot::isPointAnEye(const goboard::Board &board,
+                        const gotypes::Point &point, gotypes::Player color) {
     if (board.isOccupied(point)) return false;
     for (const auto &nbr : point.neighbors())
         if (board.checkGridBound(nbr) and board.isOccupied(nbr) and
@@ -45,7 +46,8 @@ bool RandomBot::isPointAnEye(const goboard::Board &board,
     return friendly_corners >= 3;
 }
 
-gotypes::Move RandomBotFast::selectMove(const gamestate::GameState &gameState) {
+gotypes::Move
+RandomBotFast::selectMove(const gamestate::GameStateFast &gameState) {
     std::vector<gotypes::Point> candidates;
     for (auto r = 1; r < gameState.board().num_rows + 1; ++r) {
         for (auto c = 1; c < gameState.board().num_cols + 1; ++c) {
@@ -61,9 +63,10 @@ gotypes::Move RandomBotFast::selectMove(const gamestate::GameState &gameState) {
     return gotypes::Move::play(candidates[rng() % candidates.size()]);
 }
 
-bool RandomBotFast::isPointAnEye(const goboard::Board &board,
-                                 const gotypes::Point &point,
-                                 gotypes::Player color) {
+bool
+RandomBotFast::isPointAnEye(const goboard::Board &board,
+                            const gotypes::Point &point,
+                            gotypes::Player color) {
     if (board.isOccupied(point)) return false;
     for (const auto &nbr : nbrTable->at(point.row).at(point.col))
         if (board.isOccupied(nbr) and board.getColor(nbr) != color)

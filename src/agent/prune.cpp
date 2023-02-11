@@ -1,7 +1,7 @@
 //
 // Created by younghoon on 23. 2. 10.
 //
-#include "minmax.h"
+#include "prune.h"
 
 namespace agent {
 
@@ -28,20 +28,28 @@ agent::MinMaxBot::isPointAnEye(const goboard::Board& board,
     return friendly_corners >= 3;
 }
 
-gotypes::Move
-MinMaxBot::selectMove(const gamestate::GameState& gameState) {
-    //    if (gameState.isOver())
-    //        if (gameState.)
-    //            else
-    auto best_result = [&](){
-        if (max_depth == 0) return captureDiff(gameState);
-    };
+int
+MinMaxBot::bestResult(const gamestate::GameStateFast& gameState, int max_depth) {
+    if (gameState.isOver()) {
+        if (gameState.winner() == gameState.nextPlayer())
+            return MAX_SCORE;
+        else
+            return MIN_SCORE;
+    }
+    if (max_depth == 0) return captureDiff(gameState);
 
-
+    auto best_so_far = MIN_SCORE;
+    for (const auto& candidate_move : gameState.legalMoves()) {
+        auto next_state           = gameState.applyMove(candidate_move);
+        auto opponent_best_result = bestResult(*next_state, max_depth - 1);
+        auto our_result           = -opponent_best_result;
+        if (our_result > best_so_far) best_so_far = our_result;
+    }
+    return best_so_far;
 }
 
 int
-MinMaxBot::captureDiff(const gamestate::GameState& gameState) {
+MinMaxBot::captureDiff(const gamestate::GameStateFast& gameState) {
     int cnt_black = 0;
     int cnt_white = 0;
     for (auto r = 1; r < gameState.board().num_rows + 1; ++r) {
@@ -57,4 +65,15 @@ MinMaxBot::captureDiff(const gamestate::GameState& gameState) {
         return cnt_black - cnt_white;
     return cnt_white - cnt_black;
 }
+
+//gotypes::Move
+//MinMaxBot::selectMove(const gamestate::GameState& gameState) {
+//    auto legal_moves = gameState.legalMoves();
+//    std::vector<int > v;
+//    for (size_t i = 0; i < legal_moves.size(); +i) {
+//        auto next_state = gameState.applyMove(legal_moves[i]);
+//        auto o
+//    }
+//}
+
 }  // namespace agent

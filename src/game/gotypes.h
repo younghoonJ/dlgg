@@ -33,8 +33,8 @@ isBlack(const Player &player) {
 }
 
 struct Point {
-    const int row;
-    const int col;
+    int row;
+    int col;
 
     Point(int row, int col) : row(row), col(col) {}
 

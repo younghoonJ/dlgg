@@ -60,7 +60,7 @@ public:
         return *grid.at(point);
     }
 
-    inline std::tuple<int, int> countStons() {
+    inline std::tuple<int, int> countStons() const {
         for (auto r = 1; r < num_rows + 1; ++r) {
             for (auto c = 1; c < num_cols + 1; ++c) {}
         }

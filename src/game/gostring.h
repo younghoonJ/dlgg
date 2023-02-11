@@ -20,7 +20,11 @@ struct Gostring {
 
     explicit Gostring(gotypes::Player color) : color(color) {}
 
-    Gostring(const Gostring &gostring) = default;
+    Gostring(const Gostring &gostring){
+        color = gostring.color;
+        stones = gostring.stones;
+        liberties = gostring.liberties;
+    };
 
     Gostring(gotypes::Player color, const std::set<gotypes::Point> &stones,
              const std::set<gotypes::Point> &liberties)

@@ -8,6 +8,7 @@
 #include <random>
 
 #include "base.h"
+#include "src/game/gamestate_slow.h"
 #include "src/game/goboard.h"
 
 namespace agent {
@@ -30,7 +31,7 @@ public:
     bool isPointAnEye(const goboard::Board &board, const gotypes::Point &point,
                       gotypes::Player color);
 
-    gotypes::Move selectMove(const gamestate::GameState &gameState) override;
+    gotypes::Move selectMove(const gamestate::GameStateSlow &gameState);
 };
 
 class RandomBotFast : public Agent {
@@ -56,7 +57,7 @@ public:
     bool isPointAnEye(const goboard::Board &board, const gotypes::Point &point,
                       gotypes::Player color);
 
-    gotypes::Move selectMove(const gamestate::GameState &gameState) override;
+    gotypes::Move selectMove(const gamestate::GameStateFast &gameState);
 };
 
 }  // namespace agent
