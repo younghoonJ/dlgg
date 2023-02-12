@@ -7,6 +7,7 @@
 #include "src/game/zobrist.h"
 #include "src/utils/utils.h"
 
+
 const int BOARDSIZE_DEFAULT = 19;
 auto nbr_table              = goboard::makeNeighborTable(BOARDSIZE_DEFAULT);
 auto corner_table           = goboard::makeCornerTable(BOARDSIZE_DEFAULT);
@@ -25,12 +26,12 @@ run_naive(int board_size = 19) {
                             .selectMove(*game);
         //        utils::printMove(game->next_player, bot_move);
         game = game.release()->applyMove(bot_move);
-    }
+   }
 };
 
 void
 run_naive_zob(int board_size = 19) {
-
+ size_t a = 1;
     auto bot_black = agent::RandomBotFast(&nbr_table, &corner_table);
     auto bot_white = agent::RandomBotFast(&nbr_table, &corner_table);
     auto game      = gamestate::GameStateFast::newGame(board_size, &nbr_table);

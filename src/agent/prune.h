@@ -7,7 +7,7 @@
 #include "src/agent/base.h"
 
 namespace agent {
-class MinMaxBot : public Agent {
+class AlphaBetaAgent : public Agent {
     int MAX_SCORE = 999999;
     int MIN_SCORE = -999999;
     goboard::pointTable_t *nbrTable;
@@ -15,14 +15,14 @@ class MinMaxBot : public Agent {
     int max_depth;
 
 public:
-    MinMaxBot(goboard::pointTable_t *nbrTable,
-              goboard::pointTable_t *cornalTable, int max_depth = 2)
+    AlphaBetaAgent(goboard::pointTable_t *nbrTable,
+                   goboard::pointTable_t *cornalTable, int max_depth = 2)
         : nbrTable(nbrTable), cornalTable(cornalTable), max_depth(max_depth) {}
 
     bool isPointAnEye(const goboard::Board &board, const gotypes::Point &point,
                       gotypes::Player color);
-    gotypes::Move selectMove(
-        const gamestate::GameStateFast &gameState) override;
+
+    gotypes::Move selectMove(const gamestate::GameStateFast &gameState);
 
     int captureDiff(const gamestate::GameStateFast &gameState);
 

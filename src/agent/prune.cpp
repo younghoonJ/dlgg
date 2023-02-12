@@ -6,7 +6,7 @@
 namespace agent {
 
 bool
-agent::MinMaxBot::isPointAnEye(const goboard::Board& board,
+agent::AlphaBetaAgent::isPointAnEye(const goboard::Board& board,
                                const gotypes::Point& point,
                                gotypes::Player color) {
     if (board.isOccupied(point)) return false;
@@ -29,7 +29,7 @@ agent::MinMaxBot::isPointAnEye(const goboard::Board& board,
 }
 
 int
-MinMaxBot::bestResult(const gamestate::GameStateFast& gameState, int max_depth) {
+AlphaBetaAgent::bestResult(const gamestate::GameStateFast& gameState, int max_depth) {
     if (gameState.isOver()) {
         if (gameState.winner() == gameState.nextPlayer())
             return MAX_SCORE;
@@ -49,7 +49,7 @@ MinMaxBot::bestResult(const gamestate::GameStateFast& gameState, int max_depth) 
 }
 
 int
-MinMaxBot::captureDiff(const gamestate::GameStateFast& gameState) {
+AlphaBetaAgent::captureDiff(const gamestate::GameStateFast& gameState) {
     int cnt_black = 0;
     int cnt_white = 0;
     for (auto r = 1; r < gameState.board().num_rows + 1; ++r) {
@@ -66,14 +66,12 @@ MinMaxBot::captureDiff(const gamestate::GameStateFast& gameState) {
     return cnt_white - cnt_black;
 }
 
-//gotypes::Move
-//MinMaxBot::selectMove(const gamestate::GameState& gameState) {
-//    auto legal_moves = gameState.legalMoves();
-//    std::vector<int > v;
-//    for (size_t i = 0; i < legal_moves.size(); +i) {
-//        auto next_state = gameState.applyMove(legal_moves[i]);
-//        auto o
-//    }
-//}
+gotypes::Move
+AlphaBetaAgent::selectMove(const gamestate::GameStateFast& gameState) {
+    return Agent::selectMove(gameState);
+
+}
+
+
 
 }  // namespace agent
